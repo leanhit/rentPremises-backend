@@ -16,9 +16,12 @@ import com.example.demo.auth.entity.Auth;
 @Table(name = "tbl_auth_contact")
 public class AuthContact {
     @Id
-    private Long id; // Khóa chính trùng với AuthLogin.id
+    private Long id; // Khóa chính trùng với Auth.id
 
+    @Column(nullable = true)
     private String phone;
+
+    @Column(nullable = true)
     private String address;
 
     @OneToOne

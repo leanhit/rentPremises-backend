@@ -1,13 +1,15 @@
 package com.example.demo.auth.entity;
 
+import com.example.demo.auth.entity.SystemRole;
+import com.example.demo.auth.entity.AuthContact;
+import com.example.demo.auth.entity.AuthInfo;
+
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
-import com.example.demo.auth.entity.BusinessRole;
-import com.example.demo.auth.entity.SystemRole;
-import com.example.demo.auth.entity.Gender;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -21,10 +23,20 @@ public class Auth {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = true)
     private boolean active;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private SystemRole role;
 
     @OneToOne(mappedBy = "auth", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -32,4 +44,7 @@ public class Auth {
 
     @OneToOne(mappedBy = "auth", cascade = CascadeType.ALL, orphanRemoval = true)
     private AuthContact contact;
+
+    @Column(nullable = true)
+    private String avatar;  // Lưu URL hoặc tên file ảnh đại diện của người dùng
 }

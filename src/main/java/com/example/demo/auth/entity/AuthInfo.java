@@ -20,11 +20,14 @@ public class AuthInfo {
     @Id
     private Long id; // Trùng với Auth.id
 
+    @Column(nullable = true)
     private String fullName;
 
+    @Column(nullable = true)
     private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private Gender gender;
 
     @OneToOne

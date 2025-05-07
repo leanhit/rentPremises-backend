@@ -11,4 +11,5 @@ public class RegisterResponse {
     private String token;
     private String refreshToken;
     private Long tokenExpiredAt; // timestamp millis
+    private UserSummary user; 
 }

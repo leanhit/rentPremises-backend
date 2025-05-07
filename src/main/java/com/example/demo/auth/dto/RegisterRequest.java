@@ -24,5 +24,6 @@ public class RegisterRequest {
 
     // Các role
     private SystemRole systemRole;
-    private List<String> businessRoles; // gửi danh sách tên role hoặc id tùy bạn xử lý
+
+    private String avatar; // Đường dẫn hoặc tên file của ảnh đại diện người dùng
 }
