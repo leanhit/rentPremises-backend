@@ -2,7 +2,7 @@ package com.example.demo.auth.dto;
 
 import lombok.Data;
 import lombok.Builder;
-import com.example.demo.auth.entity.SystemRole;
+import com.example.demo.auth.entity.Role;
 import java.util.List;
 
 @Data
@@ -12,6 +12,6 @@ public class LoginResponse {
     private String message;
     private String token;        // access token
     private String refreshToken; // optional nếu bạn có implement refresh
-    private SystemRole systemRole;
+    private Role Role;
     private UserSummary user; 
 }

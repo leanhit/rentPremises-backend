@@ -1,6 +1,6 @@
 package com.example.demo.auth.entity;
 
-public enum SystemRole {
+public enum Role {
     ADMIN,
     MODERATOR,
     USER,

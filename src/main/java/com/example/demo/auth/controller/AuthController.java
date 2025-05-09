@@ -1,7 +1,9 @@
 package com.example.demo.auth.controller;
 
 import com.example.demo.auth.dto.*;
+import com.example.demo.auth.entity.Auth;
 import com.example.demo.auth.service.AuthService;
+import com.example.demo.auth.utils.AuthContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,28 +15,23 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthContext authContext;
 
     // Kiểm tra username tồn tại
-    @GetMapping("check-username")
+    @GetMapping("/check-username")
     public boolean checkUsernameExists(@RequestParam String username) {
         return authService.checkUsernameExists(username);
     }
 
     // Kiểm tra email tồn tại
-    @GetMapping("check-email")
+    @GetMapping("/check-email")
     public boolean checkEmailExists(@RequestParam String email) {
         return authService.checkEmailExists(email);
     }
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
-        System.out.println("Received request: " + request); // In ra request
-        if (request == null) {
-            System.out.println("Request is null");
-        } else {
-            System.out.println("Request details: " + request.toString());
-        }
-
+        System.out.println("Received request: " + request); 
         RegisterResponse response = authService.register(request);
         return ResponseEntity.ok(response);
     }
@@ -61,8 +58,21 @@ public class AuthController {
     }
 
     @PutMapping("/{authId}/system-role")
-    @PreAuthorize("hasRole('ADMIN')") // Chỉ admin mới được đổi SystemRole
-    public void changeSystemRole(@PathVariable Long authId, @RequestBody UpdateSystemRoleRequest request) {
-        authService.changeSystemRole(authId, request);
+    @PreAuthorize("hasRole('ADMIN')")
+    public void changeRole(@PathVariable Long authId, @RequestBody UpdateRoleRequest request) {
+        authService.changeRole(authId, request);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        Auth auth = authContext.getCurrentAuth(); 
+        return ResponseEntity.ok(authService.toUserDto(auth));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest req) {
+        Auth auth = authContext.getCurrentAuth(); 
+        authService.updateProfile(auth.getId(), req);
+        return ResponseEntity.ok().build();
     }
 }

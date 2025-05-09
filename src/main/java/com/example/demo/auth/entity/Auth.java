@@ -1,6 +1,6 @@
 package com.example.demo.auth.entity;
 
-import com.example.demo.auth.entity.SystemRole;
+import com.example.demo.auth.entity.Role;
 import com.example.demo.auth.entity.AuthContact;
 import com.example.demo.auth.entity.AuthInfo;
 
@@ -37,7 +37,7 @@ public class Auth {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
-    private SystemRole role;
+    private Role role;
 
     @OneToOne(mappedBy = "auth", cascade = CascadeType.ALL, orphanRemoval = true)
     private AuthInfo info;

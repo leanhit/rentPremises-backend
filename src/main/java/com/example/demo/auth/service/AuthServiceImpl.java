@@ -3,12 +3,16 @@ package com.example.demo.auth.service.impl;
 import com.example.demo.auth.dto.*;
 import com.example.demo.auth.entity.*;
 import com.example.demo.auth.repository.*;
-import com.example.demo.auth.security.JwtUtils;
+import com.example.demo.auth.security.*;
 import com.example.demo.auth.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthContactRepository authContactRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
+
 
     public boolean checkUsernameExists(String username) {
         return authRepository.existsByUsername(username);
@@ -50,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .active(true)
-                .role(request.getSystemRole())
+                .role(request.getRole())
                 .avatar(request.getAvatar())  // Thêm avatar
                 .build();
 
@@ -128,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
                 .message("Login successful")
                 .token(token)
                 .refreshToken(refreshToken)
-                .systemRole(auth.getRole())
+                .Role(auth.getRole())
                 .user(summary)  // Thêm đối tượng user vào response
                 .build();
     }
@@ -182,11 +187,47 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void changeSystemRole(Long authId, UpdateSystemRoleRequest request) {
+    public void changeRole(Long authId, UpdateRoleRequest request) {
         Auth auth = authRepository.findById(authId)
                 .orElseThrow(() -> new RuntimeException("Auth not found"));
 
-        auth.setRole(request.getSystemRole());
+        auth.setRole(request.getRole());
         authRepository.save(auth);
     }
+
+    @Override
+    @Transactional
+    public void updateProfile(Long id, ProfileUpdateRequest req) {
+        Auth auth = authRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (req.getAvatar() != null) {
+            auth.setAvatar(req.getAvatar());
+        }
+        if (auth.getInfo() != null && req.getFullName() != null) {
+            auth.getInfo().setFullName(req.getFullName());
+        }
+        if (auth.getContact() != null) {
+            if (req.getPhone() != null) auth.getContact().setPhone(req.getPhone());
+            if (req.getAddress() != null) auth.getContact().setAddress(req.getAddress());
+        }
+
+        authRepository.save(auth);
+    }
+
+    @Override
+    public UserSummary toUserDto(Auth auth) {
+        // Chuyển đổi từ đối tượng Auth sang đối tượng UserDto
+        return new UserSummary(auth.getId(), auth.getUsername(), auth.getEmail(), auth.getAvatar());
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Auth auth = authRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Trả về CustomUserDetails thay vì Auth
+        return new CustomUserDetails(auth);
+    }
+
 }

@@ -1,7 +1,7 @@
 package com.example.demo.auth.dto;
 
 import com.example.demo.auth.entity.Gender;
-import com.example.demo.auth.entity.SystemRole;
+import com.example.demo.auth.entity.Role;
 import lombok.Data;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class RegisterRequest {
     private String phone;
 
     // Các role
-    private SystemRole systemRole;
+    private Role Role;
 
     private String avatar; // Đường dẫn hoặc tên file của ảnh đại diện người dùng
 }
