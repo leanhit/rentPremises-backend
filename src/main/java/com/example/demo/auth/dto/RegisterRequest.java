@@ -14,16 +14,19 @@ public class RegisterRequest {
 
     // Thông tin cá nhân
     private String fullName;
-    private String dateOfBirth;
-    private Gender gender;
-    private String address;
+    private String dateOfBirth; // Có thể là String hoặc LocalDate nếu cần format
+    private Gender gender; // Kiểu enum cho Gender
+    private String province; 
+    private String district; 
+    private String ward; 
+    private String detail; 
 
     // Thông tin liên hệ
     private String email;
     private String phone;
 
     // Các role
-    private Role Role;
+    private Role role; // Role với kiểu enum
 
     private String avatar; // Đường dẫn hoặc tên file của ảnh đại diện người dùng
 }

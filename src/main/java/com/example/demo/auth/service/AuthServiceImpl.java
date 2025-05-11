@@ -39,27 +39,27 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        // Check username tồn tại
+        // Kiểm tra username đã tồn tại chưa
         if (authRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists!");
         }
 
-        // Check email tồn tại
+        // Kiểm tra email đã tồn tại chưa
         if (authRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists!");
         }
 
-        // Tạo đối tượng Auth với các thông tin từ request, bao gồm avatar
+        // Tạo đối tượng Auth
         Auth auth = Auth.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .active(true)
                 .role(request.getRole())
-                .avatar(request.getAvatar())  // Thêm avatar
+                .avatar(request.getAvatar())
                 .build();
 
-        // Tạo AuthInfo với thông tin từ request
+        // Tạo AuthInfo
         AuthInfo authInfo = AuthInfo.builder()
                 .fullName(request.getFullName())
                 .gender(request.getGender())
@@ -67,41 +67,44 @@ public class AuthServiceImpl implements AuthService {
                 .auth(auth)
                 .build();
 
-        // Tạo AuthContact với thông tin từ request
+        // Tạo AuthContact với các trường mới: province, district, ward, street
         AuthContact authContact = AuthContact.builder()
                 .phone(request.getPhone())
-                .address(request.getAddress())
+                .province(request.getProvince())
+                .district(request.getDistrict())
+                .ward(request.getWard())
+                .street(request.getDetail()) // ánh xạ detail -> street
                 .auth(auth)
                 .build();
 
-        // Set AuthInfo và AuthContact vào Auth
+        // Gán Info và Contact cho Auth
         auth.setInfo(authInfo);
         auth.setContact(authContact);
 
-        // Lưu đối tượng Auth vào cơ sở dữ liệu
+        // Lưu vào DB
         authRepository.save(auth);
 
-        // Tạo JWT token cho người dùng mới
+        // Tạo token
         String token = jwtUtils.generateToken(auth.getUsername());
 
-        // Tạo đối tượng UserSummary với thông tin người dùng đã đăng ký
+        // Trả về phản hồi
         UserSummary summary = new UserSummary(
                 auth.getId(),
                 auth.getUsername(),
                 auth.getEmail(),
-                auth.getAvatar()  // Thêm avatar vào UserSummary
+                auth.getAvatar()
         );
 
-        // Trả về thông tin đăng ký, bao gồm token, userSummary và các thông tin cần thiết
         return RegisterResponse.builder()
                 .success(true)
                 .message("Register successful")
                 .token(token)
-                .refreshToken(null) // Nếu bạn làm refreshToken thì thêm vào
-                .tokenExpiredAt(System.currentTimeMillis() + 3600 * 1000) // 1h
-                .user(summary)  // Thêm đối tượng user vào response
+                .refreshToken(null)
+                .tokenExpiredAt(System.currentTimeMillis() + 3600 * 1000) // 1 giờ
+                .user(summary)
                 .build();
     }
+
 
     @Override
     @Transactional
@@ -117,14 +120,22 @@ public class AuthServiceImpl implements AuthService {
 
         // Tạo JWT token
         String token = jwtUtils.generateToken(auth.getUsername());
-        String refreshToken = null; // Nếu bạn làm refreshToken thì thêm vào
+        String refreshToken = jwtUtils.generateRefreshToken(auth.getUsername());  // Đã thêm tạo refresh token
 
         // Tạo đối tượng UserSummary với các tham số từ Auth
         UserSummary summary = new UserSummary(
                 auth.getId(), 
                 auth.getUsername(), 
                 auth.getEmail(), 
-                auth.getAvatar() // Thêm avatar vào
+                auth.getAvatar(),  // Thêm avatar vào
+                auth.getInfo() != null ? auth.getInfo().getFullName() : null, // Lấy tên đầy đủ từ AuthInfo
+                auth.getInfo() != null ? auth.getInfo().getDateOfBirth() : null, // Lấy ngày sinh từ AuthInfo
+                auth.getInfo() != null ? auth.getInfo().getGender().name() : null, // Giới tính từ AuthInfo
+                auth.getContact() != null ? auth.getContact().getPhone() : null, // Số điện thoại từ AuthContact
+                auth.getContact() != null ? auth.getContact().getProvince() : null, // Tỉnh từ AuthContact
+                auth.getContact() != null ? auth.getContact().getDistrict() : null, // Quận/Huyện từ AuthContact
+                auth.getContact() != null ? auth.getContact().getWard() : null, // Phường/Xã từ AuthContact
+                auth.getContact() != null ? auth.getContact().getStreet() : null // Địa chỉ chi tiết từ AuthContact
         );
 
         // Trả về LoginResponse
@@ -133,45 +144,11 @@ public class AuthServiceImpl implements AuthService {
                 .message("Login successful")
                 .token(token)
                 .refreshToken(refreshToken)
-                .Role(auth.getRole())
+                .role(auth.getRole()) // Trả về role
                 .user(summary)  // Thêm đối tượng user vào response
                 .build();
     }
 
-    public void updateAuthInfo(Long authId, UpdateAuthInfoRequest request) {
-        Auth auth = authRepository.findById(authId)
-                .orElseThrow(() -> new RuntimeException("Auth not found"));
-
-        AuthInfo info = auth.getInfo();
-        if (info == null) {
-            info = new AuthInfo();
-            info.setAuth(auth);
-            info.setId(auth.getId());
-        }
-
-        info.setFullName(request.getFullName());
-        info.setDateOfBirth(request.getDateOfBirth());
-        info.setGender(request.getGender());
-
-        authInfoRepository.save(info);
-    }
-
-    public void updateAuthContact(Long authId, UpdateAuthContactRequest request) {
-        Auth auth = authRepository.findById(authId)
-                .orElseThrow(() -> new RuntimeException("Auth not found"));
-
-        AuthContact contact = auth.getContact();
-        if (contact == null) {
-            contact = new AuthContact();
-            contact.setAuth(auth);
-            contact.setId(auth.getId());
-        }
-
-        contact.setPhone(request.getPhone());
-        contact.setAddress(request.getAddress());
-
-        authContactRepository.save(contact);
-    }
 
     @Override
     public void changePassword(Long authId, ChangePasswordRequest request) {
@@ -187,33 +164,62 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void changeRole(Long authId, UpdateRoleRequest request) {
-        Auth auth = authRepository.findById(authId)
-                .orElseThrow(() -> new RuntimeException("Auth not found"));
-
-        auth.setRole(request.getRole());
-        authRepository.save(auth);
-    }
-
-    @Override
     @Transactional
     public void updateProfile(Long id, ProfileUpdateRequest req) {
         Auth auth = authRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (req.getAvatar() != null) {
+        // Avatar
+        if (req.getAvatar() != null && !req.getAvatar().equals(auth.getAvatar())) {
             auth.setAvatar(req.getAvatar());
         }
-        if (auth.getInfo() != null && req.getFullName() != null) {
-            auth.getInfo().setFullName(req.getFullName());
+
+        // AuthInfo
+        if (auth.getInfo() != null) {
+            if (req.getFullName() != null && !req.getFullName().equals(auth.getInfo().getFullName())) {
+                auth.getInfo().setFullName(req.getFullName());
+            }
+
+            if (req.getBirthday() != null && !req.getBirthday().equals(auth.getInfo().getDateOfBirth())) {
+                auth.getInfo().setDateOfBirth(req.getBirthday());
+            }
+
+            if (req.getGender() != null) {
+                try {
+                    Gender newGender = Gender.valueOf(req.getGender().toUpperCase());
+                    if (!newGender.equals(auth.getInfo().getGender())) {
+                        auth.getInfo().setGender(newGender);
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid gender value: " + req.getGender());
+                }
+            }
         }
+
+        // AuthContact
         if (auth.getContact() != null) {
-            if (req.getPhone() != null) auth.getContact().setPhone(req.getPhone());
-            if (req.getAddress() != null) auth.getContact().setAddress(req.getAddress());
+            AuthContact contact = auth.getContact();
+
+            if (req.getPhone() != null && !req.getPhone().equals(contact.getPhone())) {
+                contact.setPhone(req.getPhone());
+            }
+            if (req.getProvince() != null && !req.getProvince().equals(contact.getProvince())) {
+                contact.setProvince(req.getProvince());
+            }
+            if (req.getDistrict() != null && !req.getDistrict().equals(contact.getDistrict())) {
+                contact.setDistrict(req.getDistrict());
+            }
+            if (req.getWard() != null && !req.getWard().equals(contact.getWard())) {
+                contact.setWard(req.getWard());
+            }
+            if (req.getDetail() != null && !req.getDetail().equals(contact.getStreet())) {
+                contact.setStreet(req.getDetail());
+            }
         }
 
         authRepository.save(auth);
     }
+
 
     @Override
     public UserSummary toUserDto(Auth auth) {

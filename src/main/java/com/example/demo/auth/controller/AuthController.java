@@ -42,25 +42,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{authId}/info")
-    public void updateAuthInfo(@PathVariable Long authId, @RequestBody UpdateAuthInfoRequest request) {
-        authService.updateAuthInfo(authId, request);
-    }
-
-    @PutMapping("/{authId}/contact")
-    public void updateAuthContact(@PathVariable Long authId, @RequestBody UpdateAuthContactRequest request) {
-        authService.updateAuthContact(authId, request);
-    }
-
     @PutMapping("/{authId}/change-password")
     public void changePassword(@PathVariable Long authId, @RequestBody ChangePasswordRequest request) {
         authService.changePassword(authId, request);
-    }
-
-    @PutMapping("/{authId}/system-role")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void changeRole(@PathVariable Long authId, @RequestBody UpdateRoleRequest request) {
-        authService.changeRole(authId, request);
     }
 
     @GetMapping("/profile")

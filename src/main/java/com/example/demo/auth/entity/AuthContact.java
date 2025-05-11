@@ -22,7 +22,16 @@ public class AuthContact {
     private String phone;
 
     @Column(nullable = true)
-    private String address;
+    private String province;
+
+    @Column(nullable = true)
+    private String district;
+
+    @Column(nullable = true)
+    private String ward;
+
+    @Column(nullable = true)
+    private String street; // hoặc addressDetail
 
     @OneToOne
     @MapsId

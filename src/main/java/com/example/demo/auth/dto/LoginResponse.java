@@ -12,6 +12,6 @@ public class LoginResponse {
     private String message;
     private String token;        // access token
     private String refreshToken; // optional nếu bạn có implement refresh
-    private Role Role;
+    private Role role;
     private UserSummary user; 
 }

@@ -10,10 +10,7 @@ public interface AuthService {
     UserSummary toUserDto(Auth auth);
     UserDetails loadUserByUsername(String username); 
 
-    void updateAuthContact(Long authId, UpdateAuthContactRequest request);
-    void updateAuthInfo(Long authId, UpdateAuthInfoRequest request);
     void changePassword(Long authId, ChangePasswordRequest request);
-    void changeRole(Long authId, UpdateRoleRequest request);
     void updateProfile(Long authId, ProfileUpdateRequest request);
     
     boolean checkUsernameExists(String username);
