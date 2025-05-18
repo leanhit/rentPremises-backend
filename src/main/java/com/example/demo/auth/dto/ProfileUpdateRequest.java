@@ -18,7 +18,7 @@ public class ProfileUpdateRequest {
 
     // Từ AuthInfo
     private String fullName;
-    private LocalDate birthday;
+    private LocalDate dateOfBirth;
     private String gender;
 
     // Từ AuthContact

@@ -13,7 +13,7 @@ public class UserSummary {
     private String avatar;
 
     private String fullName;
-    private LocalDate birthday;
+    private LocalDate dateOfBirth;
     private String gender;
 
     private String phone;
@@ -30,7 +30,7 @@ public class UserSummary {
         this.avatar = avatar;
 
         this.fullName = null;
-        this.birthday = null;
+        this.dateOfBirth = null;
         this.gender = null;
         this.phone = null;
         this.province = null;

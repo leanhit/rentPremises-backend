@@ -145,8 +145,8 @@ public class AuthServiceImpl implements AuthService {
                 auth.getInfo().setFullName(req.getFullName());
             }
 
-            if (req.getBirthday() != null && !req.getBirthday().equals(auth.getInfo().getDateOfBirth())) {
-                auth.getInfo().setDateOfBirth(req.getBirthday());
+            if (req.getDateOfBirth() != null && !req.getDateOfBirth().equals(auth.getInfo().getDateOfBirth())) {
+                auth.getInfo().setDateOfBirth(req.getDateOfBirth());
             }
 
             if (req.getGender() != null) {
