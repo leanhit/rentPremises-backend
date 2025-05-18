@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Data
@@ -14,7 +15,6 @@ public class ProfileUpdateRequest {
     // Từ Auth
     private String username;
     private String email;
-    private String avatar;
 
     // Từ AuthInfo
     private String fullName;

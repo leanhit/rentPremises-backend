@@ -53,7 +53,7 @@ public class JwtUtils {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, secretKeyBase64)
+                .signWith(SignatureAlgorithm.HS256, secretKeyBase64)
                 .compact();
     }
 

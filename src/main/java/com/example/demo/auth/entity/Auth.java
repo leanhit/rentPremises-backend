@@ -45,6 +45,6 @@ public class Auth {
     @OneToOne(mappedBy = "auth", cascade = CascadeType.ALL, orphanRemoval = true)
     private AuthContact contact;
 
-    @Column(nullable = true)
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String avatar;  // Lưu URL hoặc tên file ảnh đại diện của người dùng
 }

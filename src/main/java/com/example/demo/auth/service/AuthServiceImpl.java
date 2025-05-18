@@ -13,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -26,15 +25,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthContactRepository authContactRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
-
-
-    public boolean checkUsernameExists(String username) {
-        return authRepository.existsByUsername(username);
-    }
-
-    public boolean checkEmailExists(String email) {
-        return authRepository.existsByEmail(email);
-    }
 
     @Override
     @Transactional
@@ -49,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Email already exists!");
         }
 
-        // Tạo đối tượng Auth
+        // Bước 1: Tạo Auth (chưa có ID)
         Auth auth = Auth.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -59,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
                 .avatar(request.getAvatar())
                 .build();
 
-        // Tạo AuthInfo
+        // Bước 2: Tạo AuthInfo (gắn với auth)
         AuthInfo authInfo = AuthInfo.builder()
                 .fullName(request.getFullName())
                 .gender(request.getGender())
@@ -67,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
                 .auth(auth)
                 .build();
 
-        // Tạo AuthContact với các trường mới: province, district, ward, street
+        // Bước 3: Tạo AuthContact (gắn với auth)
         AuthContact authContact = AuthContact.builder()
                 .phone(request.getPhone())
                 .province(request.getProvince())
@@ -77,23 +67,18 @@ public class AuthServiceImpl implements AuthService {
                 .auth(auth)
                 .build();
 
-        // Gán Info và Contact cho Auth
+        // Bước 4: Gán info và contact vào auth
         auth.setInfo(authInfo);
         auth.setContact(authContact);
 
-        // Lưu vào DB
-        authRepository.save(auth);
+        // Bước 5: Lưu auth - JPA sẽ cascade info và contact
+        auth = authRepository.save(auth);
 
-        // Tạo token
+        // Bước 6: Tạo token
         String token = jwtUtils.generateToken(auth.getUsername());
 
-        // Trả về phản hồi
-        UserSummary summary = new UserSummary(
-                auth.getId(),
-                auth.getUsername(),
-                auth.getEmail(),
-                auth.getAvatar()
-        );
+        // Tạo thông tin tóm tắt trả về        
+        UserSummary summary = toUserDto(auth);
 
         return RegisterResponse.builder()
                 .success(true)
@@ -104,8 +89,7 @@ public class AuthServiceImpl implements AuthService {
                 .user(summary)
                 .build();
     }
-
-
+    
     @Override
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -123,20 +107,7 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtUtils.generateRefreshToken(auth.getUsername());  // Đã thêm tạo refresh token
 
         // Tạo đối tượng UserSummary với các tham số từ Auth
-        UserSummary summary = new UserSummary(
-                auth.getId(), 
-                auth.getUsername(), 
-                auth.getEmail(), 
-                auth.getAvatar(),  // Thêm avatar vào
-                auth.getInfo() != null ? auth.getInfo().getFullName() : null, // Lấy tên đầy đủ từ AuthInfo
-                auth.getInfo() != null ? auth.getInfo().getDateOfBirth() : null, // Lấy ngày sinh từ AuthInfo
-                auth.getInfo() != null ? auth.getInfo().getGender().name() : null, // Giới tính từ AuthInfo
-                auth.getContact() != null ? auth.getContact().getPhone() : null, // Số điện thoại từ AuthContact
-                auth.getContact() != null ? auth.getContact().getProvince() : null, // Tỉnh từ AuthContact
-                auth.getContact() != null ? auth.getContact().getDistrict() : null, // Quận/Huyện từ AuthContact
-                auth.getContact() != null ? auth.getContact().getWard() : null, // Phường/Xã từ AuthContact
-                auth.getContact() != null ? auth.getContact().getStreet() : null // Địa chỉ chi tiết từ AuthContact
-        );
+        UserSummary summary = toUserDto(auth);
 
         // Trả về LoginResponse
         return LoginResponse.builder()
@@ -148,7 +119,6 @@ public class AuthServiceImpl implements AuthService {
                 .user(summary)  // Thêm đối tượng user vào response
                 .build();
     }
-
 
     @Override
     public void changePassword(Long authId, ChangePasswordRequest request) {
@@ -168,11 +138,6 @@ public class AuthServiceImpl implements AuthService {
     public void updateProfile(Long id, ProfileUpdateRequest req) {
         Auth auth = authRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Avatar
-        if (req.getAvatar() != null && !req.getAvatar().equals(auth.getAvatar())) {
-            auth.setAvatar(req.getAvatar());
-        }
 
         // AuthInfo
         if (auth.getInfo() != null) {
@@ -220,11 +185,22 @@ public class AuthServiceImpl implements AuthService {
         authRepository.save(auth);
     }
 
-
     @Override
     public UserSummary toUserDto(Auth auth) {
-        // Chuyển đổi từ đối tượng Auth sang đối tượng UserDto
-        return new UserSummary(auth.getId(), auth.getUsername(), auth.getEmail(), auth.getAvatar());
+        return new UserSummary(
+            auth.getId(),
+            auth.getUsername(),
+            auth.getEmail(),
+            auth.getAvatar(),
+            auth.getInfo() != null ? auth.getInfo().getFullName() : null,
+            auth.getInfo() != null ? auth.getInfo().getDateOfBirth() : null,
+            auth.getInfo() != null && auth.getInfo().getGender() != null ? auth.getInfo().getGender().name() : null,
+            auth.getContact() != null ? auth.getContact().getPhone() : null,
+            auth.getContact() != null ? auth.getContact().getProvince() : null,
+            auth.getContact() != null ? auth.getContact().getDistrict() : null,
+            auth.getContact() != null ? auth.getContact().getWard() : null,
+            auth.getContact() != null ? auth.getContact().getStreet() : null
+        );
     }
 
     @Override
@@ -235,5 +211,4 @@ public class AuthServiceImpl implements AuthService {
         // Trả về CustomUserDetails thay vì Auth
         return new CustomUserDetails(auth);
     }
-
 }

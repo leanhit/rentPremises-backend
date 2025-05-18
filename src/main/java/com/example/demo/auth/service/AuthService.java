@@ -12,7 +12,4 @@ public interface AuthService {
 
     void changePassword(Long authId, ChangePasswordRequest request);
     void updateProfile(Long authId, ProfileUpdateRequest request);
-    
-    boolean checkUsernameExists(String username);
-    boolean checkEmailExists(String email);
 }
